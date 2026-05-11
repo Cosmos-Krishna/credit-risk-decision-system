@@ -1,88 +1,410 @@
-# LendingClub Credit Risk Decision System
-## Final Pipeline Report
+# 🏦 LendingClub Credit Risk Decision System
+
+Enterprise-style Machine Learning system for:
+
+* Credit Default Prediction
+* Risk-Based Loan Decisioning
+* Portfolio Risk Optimization
+* Explainable AI (SHAP)
+* Business-Aware Lending Decisions
+
+Built using the LendingClub dataset containing ~396K real-world loan applications.
 
 ---
 
-### Dataset
-- **Records**: 396,030 loans | **Features**: 27 raw to 50 engineered
-- **Default Rate**: 19.61% (Charged Off) | Class imbalance handled via `scale_pos_weight`
+# 🚀 Project Overview
+
+Traditional ML projects stop at prediction.
+
+This system goes beyond prediction and simulates how a real BFSI (Banking, Financial Services, and Insurance) institution could:
+
+* estimate probability of default (PD)
+* evaluate expected profitability
+* optimize loan approvals
+* reduce portfolio risk
+* explain model decisions using SHAP
+
+The final output is not just a probability score.
+
+The system produces actionable lending decisions:
+
+* ✅ APPROVE
+* ⚠️ REVIEW
+* ❌ REJECT
+
+based on both:
+
+* predicted risk
+* expected business profitability
 
 ---
 
-### Pipeline Steps
+# 📊 Dataset
 
-| Step | Module | Key Action |
-|------|--------|-----------|
-| 1 | data_loader.py | Load CSV, encode target (Charged Off = 1) |
-| 2 | eda.py | 5 visualisations: target, interest, grade, correlation, loan_amnt |
-| 3 | preprocess.py | Drop leakage cols, impute (mort_acc group-median), cap outliers |
-| 4 | feature_engineering.py | 5 domain features + OHE encoding |
-| 5 | model.py | XGBoost with scale_pos_weight=4.10 |
-| 6 | evaluation.py | ROC-AUC, Precision/Recall/F1, confusion matrix |
-| 7 | threshold.py | F1-optimal threshold sweep |
-| 8 | decision_engine.py | APPROVE / REVIEW / REJECT with expected profit |
-| 9 | portfolio_simulation.py | Business impact charts |
-| 10 | utils.py | Feature importance + SHAP |
+## LendingClub Loan Dataset
 
----
+| Property            | Value                      |
+| ------------------- | -------------------------- |
+| Records             | 396,030 loans              |
+| Raw Features        | 27                         |
+| Engineered Features | 50+                        |
+| Target              | Loan Default (Charged Off) |
+| Default Rate        | 19.61%                     |
 
-### Model Performance (XGBoost)
+Target Encoding:
 
-| Metric | Default (0.5) | Optimal (0.53) |
-|--------|-------------|---------------|
-| ROC-AUC | 0.7223 | 0.7223 |
-| Recall (default) | 0.6579 | 0.6060 |
-| Precision (default) | 0.3246 | 0.3417 |
-| F1 (default) | 0.4347 | 0.4370 |
+| Loan Status | Encoded Value |
+| ----------- | ------------- |
+| Fully Paid  | 0             |
+| Charged Off | 1             |
 
 ---
 
-### Decision Engine Results (Test Set — 79,206 loans)
+# 🧠 Core System Architecture
 
-| Decision | Count | % |
-|----------|-------|---|
-| APPROVE | 1,675 | 2.1% |
-| REVIEW | 11,408 | 14.4% |
-| REJECT | 66,123 | 83.5% |
-
-- **Expected Portfolio Profit (approved)**: $2,121,340
-- **Avg profit per approved loan**: $1,266
-- **Default rate in approved loans**: 2.0% (vs 19.6% overall)
-
----
-
-### Top Risk Drivers (SHAP)
-1. `int_rate` — highest interest rate = higher default probability
-2. `dti` — debt-to-income ratio
-3. `annual_inc` — income level
-4. `revol_util` — revolving credit utilisation
-5. `loan_to_income` — engineered ratio (loan burden vs income)
-
----
-
-### Business Logic
+```text
+Raw LendingClub Data
+            ↓
+Data Cleaning & Preprocessing
+            ↓
+Feature Engineering
+            ↓
+Model Benchmarking
+(Logistic / RF / XGBoost)
+            ↓
+Cross Validation
+            ↓
+XGBoost Final Model
+            ↓
+Probability of Default (PD)
+            ↓
+Expected Loss + Profit Engine
+            ↓
+Approve / Review / Reject
+            ↓
+Portfolio Analytics
+            ↓
+SHAP Explainability
+            ↓
+Streamlit Dashboard
 ```
-Expected Profit = (1-PD) × (loan × int_rate × term_years) − PD × loan × (1 − recovery_rate)
 
-PD < 0.10  AND profit > 0  to  APPROVE
-0.10 ≤ PD ≤ 0.25           to  REVIEW
-PD > 0.25  OR  profit < 0  to  REJECT
+---
+
+# ⚙️ Key Features
+
+## ✅ Advanced Preprocessing
+
+* Leakage removal
+* Missing value imputation
+* Group-based median imputation (`mort_acc`)
+* Outlier capping
+* Feature scaling
+* One-hot encoding
+
+---
+
+## ✅ Feature Engineering
+
+Engineered domain-specific financial features:
+
+| Feature            | Description                           |
+| ------------------ | ------------------------------------- |
+| loan_to_income     | Loan burden relative to income        |
+| installment_ratio  | Installment relative to annual income |
+| credit_utilization | Revolving balance utilization         |
+| account_age        | Credit history age                    |
+| dti_bucket         | Risk bucketization for DTI            |
+
+---
+
+## ✅ Model Benchmarking
+
+The system benchmarks multiple ML algorithms using Stratified K-Fold Cross Validation.
+
+### Compared Models
+
+* Logistic Regression
+* Random Forest
+* XGBoost
+
+### Evaluation Metrics
+
+* ROC-AUC
+* Precision
+* Recall
+* F1-Score
+
+---
+
+# 📈 Model Performance
+
+## Cross-Validated Benchmark Results
+
+| Model              | ROC-AUC | Precision | Recall | F1    |
+| ------------------ | ------- | --------- | ------ | ----- |
+| XGBoost            | 0.721   | 0.334     | 0.619  | 0.434 |
+| RandomForest       | 0.711   | 0.325     | 0.603  | 0.425 |
+| LogisticRegression | 0.686   | 0.301     | 0.601  | 0.408 |
+
+### Final Selected Model
+
+✅ XGBoost
+
+Reason:
+
+* highest ROC-AUC
+* best recall-performance balance
+* superior handling of class imbalance
+* strong nonlinear learning capability
+
+---
+
+# 💰 Business Decision Engine
+
+Instead of only predicting default probability, the system converts predictions into lending decisions.
+
+## Core BFSI Concepts Used
+
+* PD (Probability of Default)
+* LGD (Loss Given Default)
+* Expected Loss
+* Expected Profit
+* Risk Bands
+
+---
+
+# 📌 Expected Profit Formula
+
+```text
+Expected Profit =
+(1 - PD) × Interest Revenue
+− PD × Expected Loss
 ```
 
 ---
 
-### Output Files
-| File | Description |
-|------|-------------|
-| 01_target_distribution.png | Class imbalance chart |
-| 02_interest_vs_default.png | Interest rate vs default KDE + grade chart |
-| 03_grade_vs_default.png | Default rate and volume by grade |
-| 04_correlation_heatmap.png | Feature correlations |
-| 05_loan_amount_distribution.png | Loan amount by default status |
-| 06_roc_curve.png | ROC curve (AUC = 0.7223) |
-| 07_confusion_matrix.png | Confusion matrix at optimal threshold |
-| 08_threshold_tuning.png | Precision / Recall / F1 vs threshold sweep |
-| 09_risk_segmentation.png | Decision pie + PD distribution + profit histogram |
-| 10_approval_profit_curve.png | Approval rate vs cumulative profit curve |
-| 11_feature_importance.png | XGBoost top-20 feature importances |
-| 12_shap_summary.png | SHAP global feature importance bar chart |
+# 📌 Decision Logic
+
+| Condition                   | Decision |
+| --------------------------- | -------- |
+| PD < 20% AND profit > 0     | APPROVE  |
+| 20% ≤ PD < 45%              | REVIEW   |
+| PD ≥ 45% OR negative profit | REJECT   |
+
+---
+
+# 📊 Portfolio Simulation Results
+
+## Test Portfolio Size
+
+79,206 loans
+
+---
+
+## Decision Distribution
+
+| Decision | Percentage |
+| -------- | ---------- |
+| APPROVE  | 9.7%       |
+| REVIEW   | 19.8%      |
+| REJECT   | 70.5%      |
+
+---
+
+## Portfolio Performance
+
+| Metric                         | Value       |
+| ------------------------------ | ----------- |
+| Expected Portfolio Profit      | $7.05M      |
+| Default Rate in Approved Loans | 4%          |
+| Original Dataset Default Rate  | 19.6%       |
+| Risk Reduction                 | Significant |
+
+---
+
+# 🔬 Explainable AI (SHAP)
+
+The system uses SHAP (SHapley Additive exPlanations) to explain:
+
+* why a loan was rejected
+* which features increased risk
+* which features reduced risk
+
+## Top Risk Drivers
+
+* Interest Rate
+* Debt-to-Income Ratio
+* Revolving Utilization
+* Annual Income
+* Loan-to-Income Ratio
+
+This makes the model more interpretable and enterprise-friendly.
+
+---
+
+# 🖥️ Streamlit Dashboard
+
+Interactive dashboard includes:
+
+* Loan application form
+* Probability of default prediction
+* Risk classification
+* Expected profit estimation
+* Approve / Review / Reject decision
+* SHAP-based explanations
+* Portfolio analytics
+* Model comparison visualizations
+
+---
+
+# 📂 Project Structure
+
+```text
+credit-risk-decision-system/
+│
+├── app/
+│   └── ui_app.py
+│
+├── src/
+│   ├── config.py
+│   ├── data_loader.py
+│   ├── eda.py
+│   ├── preprocess.py
+│   ├── feature_engineering.py
+│   ├── model.py
+│   ├── model_comparison.py
+│   ├── evaluation.py
+│   ├── threshold.py
+│   ├── decision_engine.py
+│   ├── portfolio_simulation.py
+│   └── utils.py
+│
+├── models/
+├── outputs/
+├── main.py
+├── README.md
+└── .gitignore
+```
+
+---
+
+# 📦 Tech Stack
+
+## Languages
+
+* Python
+
+## Machine Learning
+
+* Scikit-learn
+* XGBoost
+* SHAP
+
+## Data Processing
+
+* Pandas
+* NumPy
+
+## Visualization
+
+* Matplotlib
+* Seaborn
+
+## Dashboard
+
+* Streamlit
+
+---
+
+# ▶️ How to Run
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/Cosmos-Krishna/credit-risk-decision-system.git
+```
+
+---
+
+## 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 3. Train Pipeline
+
+```bash
+python main.py
+```
+
+---
+
+## 4. Launch Dashboard
+
+```bash
+streamlit run app/ui_app.py
+```
+
+---
+
+# 📸 Dashboard Preview
+
+Add screenshots inside:
+
+```text
+assets/
+```
+
+Recommended screenshots:
+
+* dashboard
+* model comparison
+* SHAP explanations
+* approval/rejection example
+* portfolio analytics
+
+---
+
+# 🎯 Business Impact
+
+This project demonstrates:
+
+* real-world credit risk modeling
+* explainable machine learning
+* risk-aware portfolio optimization
+* business-driven decision systems
+* production-style ML architecture
+* model benchmarking and validation
+
+---
+
+# 🔮 Future Improvements
+
+Potential enterprise extensions:
+
+* PostgreSQL integration
+* Docker deployment
+* FastAPI backend
+* Real-time scoring API
+* Drift monitoring
+* Automated retraining pipeline
+* Cloud deployment
+
+---
+
+# 👨‍💻 Author
+
+Krishna Sinha
+
+BTech IT Student · Data Science Intern
+
+Focused on:
+
+* Machine Learning
+* Explainable AI
+* BFSI Analytics
+* Applied ML Engineering
