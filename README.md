@@ -113,7 +113,6 @@ Source: LendingClub Historical Loan Dataset
 
 Approximate Portfolio Statistics:
 
-- Total Loans: 80,000
 - Fully Paid: 80.3%
 - Charged Off / Default: 19.7%
 - Class Imbalance: ~4:1
